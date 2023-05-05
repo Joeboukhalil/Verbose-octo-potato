@@ -1,4 +1,4 @@
-import speech_recognition as sr
+Import speech_recognition as sr
 import serial
 
 # Set up serial communication with the robot
