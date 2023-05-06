@@ -1,28 +1,58 @@
-Import speech_recognition as sr
-import serial
+class MazeSolver:
+    def __init__(self, maze):
+        self.maze = maze
+        self.visited = set()
+        self.path = []
 
-# Set up serial communication with the robot
-ser = serial.Serial('/dev/ttyACM0', 9600) # Replace with your serial port and baud rate
+    def solve(self, start, end):
+        self.path.append(start)
+        self.visited.add(start)
 
-# Initialize the speech recognition engine
-r = sr.Recognizer()
+        if start == end:
+            return True
 
-# Set up the microphone as the source for the speech recognition
-with sr.Microphone() as source:
-    print("Say something!")
-    while True:
-        # Listen for audio input
-        audio = r.listen(source)
+        neighbors = self.get_neighbors(start)
+        for neighbor in neighbors:
+            if neighbor not in self.visited:
+                if self.solve(neighbor, end):
+                    return True
 
-        try:
-            # Recognize speech using Google Speech Recognition
-            command = r.recognize_google(audio)
-            print("You said: " + command)
+        self.path.pop()
+        return False
 
-            # Send the command to the robot
-            ser.write(command.encode())
+    def get_neighbors(self, position):
+        row, col = position
+        neighbors = []
 
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-        except sr.RequestError as e:
-            print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        # Check for valid neighbors (up, down, left, right)
+        if row > 0 and self.maze[row - 1][col] != "#":
+            neighbors.append((row - 1, col))
+        if row < len(self.maze) - 1 and self.maze[row + 1][col] != "#":
+            neighbors.append((row + 1, col))
+        if col > 0 and self.maze[row][col - 1] != "#":
+            neighbors.append((row, col - 1))
+        if col < len(self.maze[0]) - 1 and self.maze[row][col + 1] != "#":
+            neighbors.append((row, col + 1))
+
+        return neighbors
+
+
+# Example usage
+maze = [
+    ["S", ".", ".", "#", ".", ".", "."],
+    [".", "#", ".", "#", ".", "#", "."],
+    [".", "#", ".", ".", ".", "#", "."],
+    [".", "#", "#", "#", ".", "#", "."],
+    [".", ".", ".", ".", ".", ".", "E"]
+]
+
+solver = MazeSolver(maze)
+start = (0, 0)
+end = (len(maze) - 1, len(maze[0]) - 1)
+
+if solver.solve(start, end):
+    print("Path found:")
+    for position in solver.path:
+        print(position)
+else:
+    print("No path found.")
